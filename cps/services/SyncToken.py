@@ -47,7 +47,7 @@ def get_datetime_from_json(json_object, field_name):
 
 
 class SyncToken:
-    """ The SyncToken is used to persist state across requests.
+    """The SyncToken is used to persist state across requests.
     When serialized over the response headers, the Kobo device will propagate the token onto following
     requests to the service. As an example use-case, the SyncToken is used to detect books that have been added
     to the library since the last time the device synced to the server.
@@ -64,7 +64,10 @@ class SyncToken:
 
     token_schema = {
         "type": "object",
-        "properties": {"version": {"type": "string"}, "data": {"type": "object"}, },
+        "properties": {
+            "version": {"type": "string"},
+            "data": {"type": "object"},
+        },
     }
     # This Schema doesn't contain enough information to detect and propagate book deletions from Calibre to the device.
     # A potential solution might be to keep a list of all known book uuids in the token, and look for any missing
@@ -77,7 +80,7 @@ class SyncToken:
             "books_last_created": {"type": "string"},
             "archive_last_modified": {"type": "string"},
             "reading_state_last_modified": {"type": "string"},
-            "tags_last_modified": {"type": "string"}
+            "tags_last_modified": {"type": "string"},
             # "books_last_id": {"type": "integer", "optional": True}
         },
     }
@@ -89,7 +92,7 @@ class SyncToken:
         books_last_modified=datetime.min,
         archive_last_modified=datetime.min,
         reading_state_last_modified=datetime.min,
-        tags_last_modified=datetime.min
+        tags_last_modified=datetime.min,
         # books_last_id=-1
     ):  # nosec
         self.raw_kobo_store_token = raw_kobo_store_token
@@ -128,10 +131,16 @@ class SyncToken:
 
         raw_kobo_store_token = data_json["raw_kobo_store_token"]
         try:
-            books_last_modified = get_datetime_from_json(data_json, "books_last_modified")
+            books_last_modified = get_datetime_from_json(
+                data_json, "books_last_modified"
+            )
             books_last_created = get_datetime_from_json(data_json, "books_last_created")
-            archive_last_modified = get_datetime_from_json(data_json, "archive_last_modified")
-            reading_state_last_modified = get_datetime_from_json(data_json, "reading_state_last_modified")
+            archive_last_modified = get_datetime_from_json(
+                data_json, "archive_last_modified"
+            )
+            reading_state_last_modified = get_datetime_from_json(
+                data_json, "reading_state_last_modified"
+            )
             tags_last_modified = get_datetime_from_json(data_json, "tags_last_modified")
         except TypeError:
             log.error("SyncToken timestamps don't parse to a datetime.")
@@ -165,16 +174,20 @@ class SyncToken:
                 "books_last_modified": to_epoch_timestamp(self.books_last_modified),
                 "books_last_created": to_epoch_timestamp(self.books_last_created),
                 "archive_last_modified": to_epoch_timestamp(self.archive_last_modified),
-                "reading_state_last_modified": to_epoch_timestamp(self.reading_state_last_modified),
+                "reading_state_last_modified": to_epoch_timestamp(
+                    self.reading_state_last_modified
+                ),
                 "tags_last_modified": to_epoch_timestamp(self.tags_last_modified),
             },
         }
         return b64encode_json(token)
 
     def __str__(self):
-        return "{},{},{},{},{},{}".format(self.books_last_created,
-                                       self.books_last_modified,
-                                       self.archive_last_modified,
-                                       self.reading_state_last_modified,
-                                       self.tags_last_modified,
-                                       self.raw_kobo_store_token)
+        return "{},{},{},{},{},{}".format(
+            self.books_last_created,
+            self.books_last_modified,
+            self.archive_last_modified,
+            self.reading_state_last_modified,
+            self.tags_last_modified,
+            self.raw_kobo_store_token,
+        )

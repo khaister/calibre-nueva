@@ -23,7 +23,9 @@ log = logger.create()
 try:
     from . import goodreads_support
 except ImportError as err:
-    log.debug("Cannot import goodreads, showing authors-metadata will not work: %s", err)
+    log.debug(
+        "Cannot import goodreads, showing authors-metadata will not work: %s", err
+    )
     goodreads_support = None
 
 
@@ -37,14 +39,21 @@ except ImportError as err:
 
 try:
     from . import SyncToken as SyncToken
+
     kobo = True
 except ImportError as err:
-    log.debug("Cannot import SyncToken, syncing books with Kobo Devices will not work: %s", err)
+    log.debug(
+        "Cannot import SyncToken, syncing books with Kobo Devices will not work: %s",
+        err,
+    )
     kobo = None
     SyncToken = None
 
 try:
     from . import gmail
 except ImportError as err:
-    log.debug("Cannot import gmail, sending books via Gmail Oauth2 Verification will not work: %s", err)
+    log.debug(
+        "Cannot import gmail, sending books via Gmail Oauth2 Verification will not work: %s",
+        err,
+    )
     gmail = None

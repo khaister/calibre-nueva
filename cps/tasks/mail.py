@@ -43,7 +43,6 @@ CHUNKSIZE = 8192
 
 # Class for sending email with ability to get current progress
 class EmailBase:
-
     transferSize = 0
     progress = 0
 
@@ -55,29 +54,29 @@ class EmailBase:
 
     def send(self, strg):
         """Send `strg' to the server."""
-        log.debug_no_auth('send: {}'.format(strg[:300]))
-        if hasattr(self, 'sock') and self.sock:
+        log.debug_no_auth("send: {}".format(strg[:300]))
+        if hasattr(self, "sock") and self.sock:
             try:
                 if self.transferSize:
-                    lock=threading.Lock()
+                    lock = threading.Lock()
                     lock.acquire()
                     self.transferSize = len(strg)
                     lock.release()
                     for i in range(0, self.transferSize, CHUNKSIZE):
                         if isinstance(strg, bytes):
-                            self.sock.send((strg[i:i + CHUNKSIZE]))
+                            self.sock.send((strg[i : i + CHUNKSIZE]))
                         else:
-                            self.sock.send((strg[i:i + CHUNKSIZE]).encode('utf-8'))
+                            self.sock.send((strg[i : i + CHUNKSIZE]).encode("utf-8"))
                         lock.acquire()
                         self.progress = i
                         lock.release()
                 else:
-                    self.sock.sendall(strg.encode('utf-8'))
+                    self.sock.sendall(strg.encode("utf-8"))
             except socket.error:
                 self.close()
-                raise smtplib.SMTPServerDisconnected('Server not connected')
+                raise smtplib.SMTPServerDisconnected("Server not connected")
         else:
-            raise smtplib.SMTPServerDisconnected('please run connect() first')
+            raise smtplib.SMTPServerDisconnected("please run connect() first")
 
     @classmethod
     def _print_debug(cls, *args):
@@ -87,7 +86,7 @@ class EmailBase:
         if self.transferSize:
             lock2 = threading.Lock()
             lock2.acquire()
-            value = int((float(self.progress) / float(self.transferSize))*100)
+            value = int((float(self.progress) / float(self.transferSize)) * 100)
             lock2.release()
             return value / 100
         else:
@@ -96,20 +95,29 @@ class EmailBase:
 
 # Class for sending email with ability to get current progress, derived from emailbase class
 class Email(EmailBase, smtplib.SMTP):
-
     def __init__(self, *args, **kwargs):
         smtplib.SMTP.__init__(self, *args, **kwargs)
 
 
 # Class for sending ssl encrypted email with ability to get current progress, , derived from emailbase class
 class EmailSSL(EmailBase, smtplib.SMTP_SSL):
-
     def __init__(self, *args, **kwargs):
         smtplib.SMTP_SSL.__init__(self, *args, **kwargs)
 
 
 class TaskEmail(CalibreTask):
-    def __init__(self, subject, filepath, attachment, settings, recipient, task_message, text, id=0, internal=False):
+    def __init__(
+        self,
+        subject,
+        filepath,
+        attachment,
+        settings,
+        recipient,
+        task_message,
+        text,
+        id=0,
+        internal=False,
+    ):
         super(TaskEmail, self).__init__(task_message)
         self.subject = subject
         self.attachment = attachment
@@ -127,31 +135,33 @@ class TaskEmail(CalibreTask):
         try:
             # Parse out the address from the From line, and then the domain from that
             from_email = parseaddr(self.settings["mail_from"])[1]
-            msgid_domain = from_email.partition('@')[2].strip()
+            msgid_domain = from_email.partition("@")[2].strip()
             # This can sometimes sneak through parseaddr if the input is malformed
-            msgid_domain = msgid_domain.rstrip('>').strip()
+            msgid_domain = msgid_domain.rstrip(">").strip()
         except Exception:
-            msgid_domain = ''
-        return msgid_domain or 'calibre-web.com'
+            msgid_domain = ""
+        return msgid_domain or "calibre-web.com"
 
     def prepare_message(self):
         message = EmailMessage()
         # message = MIMEMultipart()
-        message['From'] = self.settings["mail_from"]
-        message['To'] = self.recipient
-        message['Subject'] = self.subject
-        message['Date'] = formatdate(localtime=True)
-        message['Message-Id'] = "{}@{}".format(uuid.uuid4(), self.get_msgid_domain())
-        message.set_content(self.text.encode('UTF-8'), "text", "plain")
+        message["From"] = self.settings["mail_from"]
+        message["To"] = self.recipient
+        message["Subject"] = self.subject
+        message["Date"] = formatdate(localtime=True)
+        message["Message-Id"] = "{}@{}".format(uuid.uuid4(), self.get_msgid_domain())
+        message.set_content(self.text.encode("UTF-8"), "text", "plain")
         if self.attachment:
             data = self._get_attachment(self.filepath, self.attachment)
             if data:
                 # Set mimetype
                 content_type, encoding = mimetypes.guess_type(self.attachment)
                 if content_type is None or encoding is not None:
-                    content_type = 'application/octet-stream'
-                main_type, sub_type = content_type.split('/', 1)
-                message.add_attachment(data, maintype=main_type, subtype=sub_type, filename=self.attachment)
+                    content_type = "application/octet-stream"
+                main_type, sub_type = content_type.split("/", 1)
+                message.add_attachment(
+                    data, maintype=main_type, subtype=sub_type, filename=self.attachment
+                )
             else:
                 self._handleError("Attachment not found")
                 return
@@ -163,43 +173,51 @@ class TaskEmail(CalibreTask):
             msg = self.prepare_message()
             if not msg:
                 return
-            if self.settings['mail_server_type'] == 0:
+            if self.settings["mail_server_type"] == 0:
                 self.send_standard_email(msg)
             else:
                 self.send_gmail_email(msg)
         except MemoryError as e:
             log.error_or_exception(e, stacklevel=3)
-            self._handleError('MemoryError sending e-mail: {}'.format(str(e)))
+            self._handleError("MemoryError sending e-mail: {}".format(str(e)))
         except (smtplib.SMTPException, smtplib.SMTPAuthenticationError) as e:
             log.error_or_exception(e, stacklevel=3)
             if hasattr(e, "smtp_error"):
-                text = e.smtp_error.decode('utf-8').replace("\n", '. ')
+                text = e.smtp_error.decode("utf-8").replace("\n", ". ")
             elif hasattr(e, "message"):
                 text = e.message
             elif hasattr(e, "args"):
-                text = '\n'.join(e.args)
+                text = "\n".join(e.args)
             else:
-                text = ''
-            self._handleError('Smtplib Error sending e-mail: {}'.format(text))
-        except (socket.error) as e:
+                text = ""
+            self._handleError("Smtplib Error sending e-mail: {}".format(text))
+        except socket.error as e:
             log.error_or_exception(e, stacklevel=3)
-            self._handleError('Socket Error sending e-mail: {}'.format(e.strerror))
+            self._handleError("Socket Error sending e-mail: {}".format(e.strerror))
         except Exception as ex:
             log.error_or_exception(ex, stacklevel=3)
-            self._handleError('Error sending e-mail: {}'.format(ex))
+            self._handleError("Error sending e-mail: {}".format(ex))
 
     def send_standard_email(self, msg):
-        use_ssl = int(self.settings.get('mail_use_ssl', 0))
+        use_ssl = int(self.settings.get("mail_use_ssl", 0))
         timeout = 600  # set timeout to 5mins
 
         # on python3 debugoutput is caught with overwritten _print_debug function
         log.debug("Start sending e-mail")
         if use_ssl == 2:
             context = ssl.create_default_context()
-            self.asyncSMTP = EmailSSL(self.settings["mail_server"], self.settings["mail_port"],
-                                       timeout=timeout, context=context)
+            self.asyncSMTP = EmailSSL(
+                self.settings["mail_server"],
+                self.settings["mail_port"],
+                timeout=timeout,
+                context=context,
+            )
         else:
-            self.asyncSMTP = Email(self.settings["mail_server"], self.settings["mail_port"], timeout=timeout)
+            self.asyncSMTP = Email(
+                self.settings["mail_server"],
+                self.settings["mail_port"],
+                timeout=timeout,
+            )
 
         # link to logginglevel
         if logger.is_debug_enabled():
@@ -208,20 +226,24 @@ class TaskEmail(CalibreTask):
             context = ssl.create_default_context()
             self.asyncSMTP.starttls(context=context)
         if self.settings["mail_password_e"]:
-            self.asyncSMTP.login(str(self.settings["mail_login"]), str(self.settings["mail_password_e"]))
+            self.asyncSMTP.login(
+                str(self.settings["mail_login"]), str(self.settings["mail_password_e"])
+            )
 
         # Convert message to something to send
         fp = StringIO()
         gen = Generator(fp, mangle_from_=False)
         gen.flatten(msg)
 
-        self.asyncSMTP.sendmail(self.settings["mail_from"], self.recipient, fp.getvalue())
+        self.asyncSMTP.sendmail(
+            self.settings["mail_from"], self.recipient, fp.getvalue()
+        )
         self.asyncSMTP.quit()
         self._handleSuccess()
         log.debug("E-mail send successfully")
 
     def send_gmail_email(self, message):
-        gmail.send_messsage(self.settings.get('mail_gmail_token', None), message)
+        gmail.send_messsage(self.settings.get("mail_gmail_token", None), message)
         self._handleSuccess()
 
     @property
@@ -254,7 +276,7 @@ class TaskEmail(CalibreTask):
             if config.config_binariesdir and config.config_embed_metadata:
                 data_path, data_file = do_calibre_export(self.book_id, extension)
                 datafile = os.path.join(data_path, data_file + "." + extension)
-            with open(datafile, 'rb') as file_:
+            with open(datafile, "rb") as file_:
                 data = file_.read()
             os.remove(datafile)
         else:
@@ -263,13 +285,15 @@ class TaskEmail(CalibreTask):
                 if config.config_binariesdir and config.config_embed_metadata:
                     data_path, data_file = do_calibre_export(self.book_id, extension)
                     datafile = os.path.join(data_path, data_file + "." + extension)
-                with open(datafile, 'rb') as file_:
+                with open(datafile, "rb") as file_:
                     data = file_.read()
                 if config.config_binariesdir and config.config_embed_metadata:
                     os.remove(datafile)
             except IOError as e:
                 log.error_or_exception(e, stacklevel=3)
-                log.error('The requested file could not be read. Maybe wrong permissions?')
+                log.error(
+                    "The requested file could not be read. Maybe wrong permissions?"
+                )
                 return None
         return data
 

@@ -25,7 +25,7 @@ from cps.services.worker import CalibreTask
 
 
 class TaskDeleteTempFolder(CalibreTask):
-    def __init__(self, task_message=N_('Delete temp folder contents')):
+    def __init__(self, task_message=N_("Delete temp folder contents")):
         super(TaskDeleteTempFolder, self).__init__(task_message)
         self.log = logger.create()
 

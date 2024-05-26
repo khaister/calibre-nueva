@@ -21,7 +21,7 @@ from urllib.parse import quote, unquote
 
 try:
     from fake_useragent.errors import FakeUserAgentError
-except (ImportError):
+except ImportError:
     FakeUserAgentError = BaseException
 try:
     from scholarly import scholarly

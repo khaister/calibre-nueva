@@ -19,34 +19,53 @@
 import datetime
 
 from . import config, constants
-from .services.background_scheduler import BackgroundScheduler, CronTrigger, use_APScheduler
+from .services.background_scheduler import (
+    BackgroundScheduler,
+    CronTrigger,
+    use_APScheduler,
+)
 from .tasks.database import TaskReconnectDatabase
 from .tasks.tempFolder import TaskDeleteTempFolder
-from .tasks.thumbnail import TaskGenerateCoverThumbnails, TaskGenerateSeriesThumbnails, TaskClearCoverThumbnailCache
+from .tasks.thumbnail import (
+    TaskGenerateCoverThumbnails,
+    TaskGenerateSeriesThumbnails,
+    TaskClearCoverThumbnailCache,
+)
 from .services.worker import WorkerThread
 from .tasks.metadata_backup import TaskBackupMetadata
+
 
 def get_scheduled_tasks(reconnect=True):
     tasks = list()
     # Reconnect Calibre database (metadata.db) based on config.schedule_reconnect
     if reconnect:
-        tasks.append([lambda: TaskReconnectDatabase(), 'reconnect', False])
+        tasks.append([lambda: TaskReconnectDatabase(), "reconnect", False])
 
     # Delete temp folder
-    tasks.append([lambda: TaskDeleteTempFolder(), 'delete temp', True])
+    tasks.append([lambda: TaskDeleteTempFolder(), "delete temp", True])
 
     # Generate metadata.opf file for each changed book
     if config.schedule_metadata_backup:
-        tasks.append([lambda: TaskBackupMetadata("en"), 'backup metadata', False])
+        tasks.append([lambda: TaskBackupMetadata("en"), "backup metadata", False])
 
     # Generate all missing book cover thumbnails
     if config.schedule_generate_book_covers:
-        tasks.append([lambda: TaskClearCoverThumbnailCache(0), 'delete superfluous book covers', True])
-        tasks.append([lambda: TaskGenerateCoverThumbnails(), 'generate book covers', False])
+        tasks.append(
+            [
+                lambda: TaskClearCoverThumbnailCache(0),
+                "delete superfluous book covers",
+                True,
+            ]
+        )
+        tasks.append(
+            [lambda: TaskGenerateCoverThumbnails(), "generate book covers", False]
+        )
 
     # Generate all missing series thumbnails
     if config.schedule_generate_series_covers:
-        tasks.append([lambda: TaskGenerateSeriesThumbnails(), 'generate book covers', False])
+        tasks.append(
+            [lambda: TaskGenerateSeriesThumbnails(), "generate book covers", False]
+        )
 
     return tasks
 
@@ -70,12 +89,18 @@ def register_scheduled_tasks(reconnect=True):
 
         # Register scheduled tasks
         timezone_info = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
-        scheduler.schedule_tasks(tasks=get_scheduled_tasks(reconnect), trigger=CronTrigger(hour=start,
-                                                                                           timezone=timezone_info))
+        scheduler.schedule_tasks(
+            tasks=get_scheduled_tasks(reconnect),
+            trigger=CronTrigger(hour=start, timezone=timezone_info),
+        )
         end_time = calclulate_end_time(start, duration)
-        scheduler.schedule(func=end_scheduled_tasks, trigger=CronTrigger(hour=end_time.hour, minute=end_time.minute,
-                                                                         timezone=timezone_info),
-                           name="end scheduled task")
+        scheduler.schedule(
+            func=end_scheduled_tasks,
+            trigger=CronTrigger(
+                hour=end_time.hour, minute=end_time.minute, timezone=timezone_info
+            ),
+            name="end scheduled task",
+        )
 
         # Kick-off tasks, if they should currently be running
         if should_task_be_running(start, duration):
@@ -91,20 +116,27 @@ def register_startup_tasks():
 
         # Run scheduled tasks immediately for development and testing
         # Ignore tasks that should currently be running, as these will be added when registering scheduled tasks
-        if constants.APP_MODE in ['development', 'test'] and not should_task_be_running(start, duration):
+        if constants.APP_MODE in ["development", "test"] and not should_task_be_running(
+            start, duration
+        ):
             scheduler.schedule_tasks_immediately(tasks=get_scheduled_tasks(False))
         else:
-            scheduler.schedule_tasks_immediately(tasks=[[lambda: TaskDeleteTempFolder(), 'delete temp', True]])
+            scheduler.schedule_tasks_immediately(
+                tasks=[[lambda: TaskDeleteTempFolder(), "delete temp", True]]
+            )
 
 
 def should_task_be_running(start, duration):
     now = datetime.datetime.now()
-    start_time = datetime.datetime.now().replace(hour=start, minute=0, second=0, microsecond=0)
-    end_time = start_time + datetime.timedelta(hours=duration // 60, minutes=duration % 60)
+    start_time = datetime.datetime.now().replace(
+        hour=start, minute=0, second=0, microsecond=0
+    )
+    end_time = start_time + datetime.timedelta(
+        hours=duration // 60, minutes=duration % 60
+    )
     return start_time < now < end_time
 
 
 def calclulate_end_time(start, duration):
     start_time = datetime.datetime.now().replace(hour=start, minute=0)
     return start_time + datetime.timedelta(hours=duration // 60, minutes=duration % 60)
-

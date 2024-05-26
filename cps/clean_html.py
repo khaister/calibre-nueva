@@ -22,6 +22,7 @@ from lxml.etree import ParserError
 try:
     # at least bleach 6.0 is needed -> incomplatible change from list arguments to set arguments
     from bleach import clean_text as clean_html
+
     BLEACH = True
 except ImportError:
     try:
@@ -48,6 +49,10 @@ def clean_string(unsafe_text, book_id=0):
         log.error("Comments of book {} are corrupted: {}".format(book_id, e))
         safe_text = ""
     except TypeError as e:
-        log.error("Comments can't be parsed, maybe 'lxml' is too new, try installing 'bleach': {}".format(e))
+        log.error(
+            "Comments can't be parsed, maybe 'lxml' is too new, try installing 'bleach': {}".format(
+                e
+            )
+        )
         safe_text = ""
     return safe_text

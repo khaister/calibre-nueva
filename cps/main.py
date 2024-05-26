@@ -27,6 +27,7 @@ from flask import request
 def request_username():
     return request.authorization.username
 
+
 def main():
     app = create_app()
 
@@ -41,28 +42,35 @@ def main():
     from .shelf import shelf
     from .tasks_status import tasks
     from .error_handler import init_errorhandler
+
     try:
         from .kobo import kobo, get_kobo_activated
         from .kobo_auth import kobo_auth
         from flask_limiter.util import get_remote_address
+
         kobo_available = get_kobo_activated()
-    except (ImportError, AttributeError):  # Catch also error for not installed flask-WTF (missing csrf decorator)
+    except (
+        ImportError,
+        AttributeError,
+    ):  # Catch also error for not installed flask-WTF (missing csrf decorator)
         kobo_available = False
 
     try:
         from .oauth_bb import oauth
+
         oauth_available = True
     except ImportError:
         oauth_available = False
 
     from . import web_server
+
     init_errorhandler()
 
     app.register_blueprint(search)
     app.register_blueprint(tasks)
     app.register_blueprint(web)
     app.register_blueprint(opds)
-    limiter.limit("3/minute",key_func=request_username)(opds)
+    limiter.limit("3/minute", key_func=request_username)(opds)
     app.register_blueprint(jinjia)
     app.register_blueprint(about)
     app.register_blueprint(shelf)

@@ -31,8 +31,8 @@ if typing.TYPE_CHECKING:
     from typing import Type  # noqa: F401
     from wsgiref.types import WSGIApplication as WSGIAppType  # noqa: F4
 
-class MyWSGIContainer(WSGIContainer):
 
+class MyWSGIContainer(WSGIContainer):
     def __call__(self, request: httputil.HTTPServerRequest) -> None:
         if tornado.version_info < (6, 3, 0, -99):
             data = {}  # type: Dict[str, Any]
@@ -89,12 +89,10 @@ class MyWSGIContainer(WSGIContainer):
         else:
             IOLoop.current().spawn_callback(self.handle_request, request)
 
-
     def environ(self, request: httputil.HTTPServerRequest) -> Dict[Text, Any]:
         try:
             environ = WSGIContainer.environ(self, request)
         except TypeError as e:
             environ = WSGIContainer.environ(request)
-        environ['RAW_URI'] = request.path
+        environ["RAW_URI"] = request.path
         return environ
-

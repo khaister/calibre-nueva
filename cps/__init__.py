@@ -43,46 +43,48 @@ from . import ub, db
 
 try:
     from flask_limiter import Limiter
+
     limiter_present = True
 except ImportError:
     limiter_present = False
 try:
     from flask_wtf.csrf import CSRFProtect
+
     wtf_present = True
 except ImportError:
     wtf_present = False
 
 
 mimetypes.init()
-mimetypes.add_type('application/xhtml+xml', '.xhtml')
-mimetypes.add_type('application/epub+zip', '.epub')
-mimetypes.add_type('application/fb2+zip', '.fb2')
-mimetypes.add_type('application/x-mobipocket-ebook', '.mobi')
-mimetypes.add_type('application/x-mobipocket-ebook', '.prc')
-mimetypes.add_type('application/vnd.amazon.ebook', '.azw')
-mimetypes.add_type('application/x-mobi8-ebook', '.azw3')
-mimetypes.add_type('application/x-cbr', '.cbr')
-mimetypes.add_type('application/x-cbz', '.cbz')
-mimetypes.add_type('application/x-cbt', '.cbt')
-mimetypes.add_type('application/x-cb7', '.cb7')
-mimetypes.add_type('image/vnd.djv', '.djv')
-mimetypes.add_type('application/mpeg', '.mpeg')
-mimetypes.add_type('application/mpeg', '.mp3')
-mimetypes.add_type('application/mp4', '.m4a')
-mimetypes.add_type('application/mp4', '.m4b')
-mimetypes.add_type('application/ogg', '.ogg')
-mimetypes.add_type('application/ogg', '.oga')
-mimetypes.add_type('text/css', '.css')
-mimetypes.add_type('text/javascript; charset=UTF-8', '.js')
+mimetypes.add_type("application/xhtml+xml", ".xhtml")
+mimetypes.add_type("application/epub+zip", ".epub")
+mimetypes.add_type("application/fb2+zip", ".fb2")
+mimetypes.add_type("application/x-mobipocket-ebook", ".mobi")
+mimetypes.add_type("application/x-mobipocket-ebook", ".prc")
+mimetypes.add_type("application/vnd.amazon.ebook", ".azw")
+mimetypes.add_type("application/x-mobi8-ebook", ".azw3")
+mimetypes.add_type("application/x-cbr", ".cbr")
+mimetypes.add_type("application/x-cbz", ".cbz")
+mimetypes.add_type("application/x-cbt", ".cbt")
+mimetypes.add_type("application/x-cb7", ".cb7")
+mimetypes.add_type("image/vnd.djv", ".djv")
+mimetypes.add_type("application/mpeg", ".mpeg")
+mimetypes.add_type("application/mpeg", ".mp3")
+mimetypes.add_type("application/mp4", ".m4a")
+mimetypes.add_type("application/mp4", ".m4b")
+mimetypes.add_type("application/ogg", ".ogg")
+mimetypes.add_type("application/ogg", ".oga")
+mimetypes.add_type("text/css", ".css")
+mimetypes.add_type("text/javascript; charset=UTF-8", ".js")
 
 log = logger.create()
 
 app = Flask(__name__)
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Lax',
-    REMEMBER_COOKIE_SAMESITE='Lax',  # will be available in flask-login 0.5.1 earliest
-    WTF_CSRF_SSL_STRICT=False
+    SESSION_COOKIE_SAMESITE="Lax",
+    REMEMBER_COOKIE_SAMESITE="Lax",  # will be available in flask-login 0.5.1 earliest
+    WTF_CSRF_SSL_STRICT=False,
 )
 
 lm = MyLoginManager()
@@ -103,9 +105,12 @@ web_server = WebServer()
 updater_thread = Updater()
 
 if limiter_present:
-    limiter = Limiter(key_func=True, headers_enabled=True, auto_check=False, swallow_errors=False)
+    limiter = Limiter(
+        key_func=True, headers_enabled=True, auto_check=False, swallow_errors=False
+    )
 else:
     limiter = None
+
 
 def create_app():
     if csrf:
@@ -115,7 +120,9 @@ def create_app():
 
     ub.init_db(cli_param.settings_path)
     # pylint: disable=no-member
-    encrypt_key, error = config_sql.get_encryption_key(os.path.dirname(cli_param.settings_path))
+    encrypt_key, error = config_sql.get_encryption_key(
+        os.path.dirname(cli_param.settings_path)
+    )
 
     config_sql.load_configuration(ub.session, encrypt_key)
     config.init_config(ub.session, encrypt_key, cli_param)
@@ -127,17 +134,19 @@ def create_app():
 
     if sys.version_info < (3, 0):
         log.info(
-            '*** Python2 is EOL since end of 2019, this version of Calibre-Web is no longer supporting Python2, '
-            'please update your installation to Python3 ***')
+            "*** Python2 is EOL since end of 2019, this version of Calibre-Web is no longer supporting Python2, "
+            "please update your installation to Python3 ***"
+        )
         print(
-            '*** Python2 is EOL since end of 2019, this version of Calibre-Web is no longer supporting Python2, '
-            'please update your installation to Python3 ***')
+            "*** Python2 is EOL since end of 2019, this version of Calibre-Web is no longer supporting Python2, "
+            "please update your installation to Python3 ***"
+        )
         web_server.stop(True)
         sys.exit(5)
 
-    lm.login_view = 'web.login'
+    lm.login_view = "web.login"
     lm.anonymous_user = ub.Anonymous
-    lm.session_protection = 'strong' if config.config_session == 1 else "basic"
+    lm.session_protection = "strong" if config.config_session == 1 else "basic"
 
     db.CalibreDB.update_config(config)
     db.CalibreDB.setup_db(config.config_calibre_dir, cli_param.settings_path)
@@ -151,27 +160,32 @@ def create_app():
     updater_thread.start()
     requirements = dependency_check()
     for res in requirements:
-        if res['found'] == "not installed":
-            message = ('Cannot import {name} module, it is needed to run calibre-web, '
-                       'please install it using "pip install {name}"').format(name=res["name"])
+        if res["found"] == "not installed":
+            message = (
+                "Cannot import {name} module, it is needed to run calibre-web, "
+                'please install it using "pip install {name}"'
+            ).format(name=res["name"])
             log.info(message)
             print("*** " + message + " ***")
             web_server.stop(True)
             sys.exit(8)
     for res in requirements + dependency_check(True):
-        log.info('*** "{}" version does not meet the requirements. '
-                 'Should: {}, Found: {}, please consider installing required version ***'
-                 .format(res['name'],
-                         res['target'],
-                         res['found']))
+        log.info(
+            '*** "{}" version does not meet the requirements. '
+            "Should: {}, Found: {}, please consider installing required version ***".format(
+                res["name"], res["target"], res["found"]
+            )
+        )
     app.wsgi_app = ReverseProxied(app.wsgi_app)
 
-    if os.environ.get('FLASK_DEBUG'):
+    if os.environ.get("FLASK_DEBUG"):
         cache_buster.init_cache_busting(app)
-    log.info('Starting Calibre Web...')
+    log.info("Starting Calibre Web...")
     Principal(app)
     lm.init_app(app)
-    app.secret_key = os.getenv('SECRET_KEY', config_sql.get_flask_session_key(ub.session))
+    app.secret_key = os.getenv(
+        "SECRET_KEY", config_sql.get_flask_session_key(ub.session)
+    )
 
     web_server.init_app(app, config)
     if hasattr(babel, "localeselector"):
@@ -185,8 +199,9 @@ def create_app():
     if services.ldap:
         services.ldap.init_app(app, config)
     if services.goodreads_support:
-        services.goodreads_support.connect(config.config_goodreads_api_key,
-                                           config.config_use_goodreads)
+        services.goodreads_support.connect(
+            config.config_goodreads_api_key, config.config_use_goodreads
+        )
     config.store_calibre_uuid(calibre_db, db.Library_Id)
     # Configure rate limiter
     # https://limits.readthedocs.io/en/stable/storage.html
@@ -198,15 +213,16 @@ def create_app():
     try:
         limiter.init_app(app)
     except Exception as e:
-        log.error('Wrong Flask Limiter configuration, falling back to default: {}'.format(e))
+        log.error(
+            "Wrong Flask Limiter configuration, falling back to default: {}".format(e)
+        )
         app.config.update(RATELIMIT_STORAGE_URI=None)
         limiter.init_app(app)
 
     # Register scheduled tasks
     from .schedule import register_scheduled_tasks, register_startup_tasks
+
     register_scheduled_tasks(config.schedule_reconnect)
     register_startup_tasks()
 
     return app
-
-

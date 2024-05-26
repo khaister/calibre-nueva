@@ -103,8 +103,7 @@ class LubimyCzytac(Metadata):
     PUBLISH_DATE = "//dt[contains(@title,'Data pierwszego wydania"
     FIRST_PUBLISH_DATE = f"{DETAILS}{PUBLISH_DATE} oryginalnego')]{SIBLINGS}[1]/text()"
     FIRST_PUBLISH_DATE_PL = f"{DETAILS}{PUBLISH_DATE} polskiego')]{SIBLINGS}[1]/text()"
-    TAGS = "//a[contains(@href,'/ksiazki/t/')]/text()" # "//nav[@aria-label='breadcrumbs']//a[contains(@href,'/ksiazki/k/')]/span/text()"
-
+    TAGS = "//a[contains(@href,'/ksiazki/t/')]/text()"  # "//nav[@aria-label='breadcrumbs']//a[contains(@href,'/ksiazki/k/')]/span/text()"
 
     RATING = "//meta[@property='books:rating:value']/@content"
     COVER = "//meta[@property='og:image']/@content"
@@ -352,6 +351,5 @@ class LubimyCzytacParser:
         translator = self._parse_xpath_node(xpath=LubimyCzytac.TRANSLATOR)
         if translator:
             description += LubimyCzytacParser.TRANSLATOR_TEMPLATE.format(translator)
-
 
         return description

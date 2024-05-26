@@ -24,19 +24,24 @@ log = logger.create()
 
 try:
     from iso639 import languages, __version__
+
     get = languages.get
 except ImportError:
     from pycountry import languages as pyc_languages
+
     try:
         import pkg_resources
-        __version__ = pkg_resources.get_distribution('pycountry').version + ' (PyCountry)'
+
+        __version__ = (
+            pkg_resources.get_distribution("pycountry").version + " (PyCountry)"
+        )
         del pkg_resources
     except (ImportError, Exception):
         __version__ = "? (PyCountry)"
 
     def _copy_fields(l):
-        l.part1 = getattr(l, 'alpha_2', None)
-        l.part3 = getattr(l, 'alpha_3', None)
+        l.part1 = getattr(l, "alpha_2", None)
+        l.part3 = getattr(l, "alpha_3", None)
         return l
 
     def get(name=None, part1=None, part3=None):
@@ -56,7 +61,7 @@ def get_language_name(locale, lang_code):
     try:
         return get_language_names(locale)[lang_code]
     except KeyError:
-        log.error('Missing translation for language name: {}'.format(lang_code))
+        log.error("Missing translation for language name: {}".format(lang_code))
         return "Unknown"
 
 
@@ -71,7 +76,6 @@ def get_language_codes(locale, language_names, remainder=None):
     if remainder is not None and language_names:
         remainder.extend(language_names)
     return lang
-
 
 
 def get_valid_language_codes(locale, language_names, remainder=None):

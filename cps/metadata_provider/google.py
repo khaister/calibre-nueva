@@ -42,9 +42,8 @@ class Google(Metadata):
     def search(
         self, query: str, generic_cover: str = "", locale: str = "en"
     ) -> Optional[List[MetaRecord]]:
-        val = list()    
+        val = list()
         if self.active:
-
             title_tokens = list(self.get_title_tokens(query, strip_joiners=False))
             if title_tokens:
                 tokens = [quote(t.encode("utf-8")) for t in title_tokens]
@@ -108,13 +107,13 @@ class Google(Metadata):
     def _parse_cover(result: Dict, generic_cover: str) -> str:
         if result["volumeInfo"].get("imageLinks"):
             cover_url = result["volumeInfo"]["imageLinks"]["thumbnail"]
-            
+
             # strip curl in cover
             cover_url = cover_url.replace("&edge=curl", "")
-            
+
             # request 800x900 cover image (higher resolution)
             cover_url += "&fife=w800-h900"
-            
+
             return cover_url.replace("http://", "https://")
         return generic_cover
 

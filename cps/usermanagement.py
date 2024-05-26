@@ -27,6 +27,7 @@ from . import lm, ub, config, constants, services, logger, limiter
 
 log = logger.create()
 
+
 def login_required_if_no_ano(func):
     @wraps(func)
     def decorated_view(*args, **kwargs):
@@ -36,11 +37,12 @@ def login_required_if_no_ano(func):
 
     return decorated_view
 
+
 def requires_basic_auth_if_no_ano(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth = request.authorization
-        if not auth or auth.type != 'basic':
+        if not auth or auth.type != "basic":
             if config.config_anonbrowse != 1:
                 user = load_user_from_reverse_proxy_header(request)
                 if user:
@@ -62,31 +64,43 @@ def requires_basic_auth_if_no_ano(f):
         if not user:
             return _authenticate()
         return f(*args, **kwargs)
+
     return decorated
 
 
 def _load_user_from_auth_header(username, password):
     limiter.check()
     user = _fetch_user_by_name(username)
-    if bool(user and check_password_hash(str(user.password), password)) and user.name != "Guest":
+    if (
+        bool(user and check_password_hash(str(user.password), password))
+        and user.name != "Guest"
+    ):
         [limiter.limiter.storage.clear(k.key) for k in limiter.current_limits]
         login_user(user)
         return user
     else:
-        ip_address = request.headers.get('X-Forwarded-For', request.remote_addr)
-        log.warning('OPDS Login failed for user "%s" IP-address: %s', username, ip_address)
+        ip_address = request.headers.get("X-Forwarded-For", request.remote_addr)
+        log.warning(
+            'OPDS Login failed for user "%s" IP-address: %s', username, ip_address
+        )
         return None
 
 
 def _authenticate():
     return Response(
-        'Could not verify your access level for that URL.\n'
-        'You have to login with proper credentials', 401,
-        {'WWW-Authenticate': 'Basic realm="Login Required"'})
+        "Could not verify your access level for that URL.\n"
+        "You have to login with proper credentials",
+        401,
+        {"WWW-Authenticate": 'Basic realm="Login Required"'},
+    )
 
 
 def _fetch_user_by_name(username):
-    return ub.session.query(ub.User).filter(func.lower(ub.User.name) == username.lower()).first()
+    return (
+        ub.session.query(ub.User)
+        .filter(func.lower(ub.User.name) == username.lower())
+        .first()
+    )
 
 
 @lm.user_loader
@@ -104,8 +118,10 @@ def load_user_from_reverse_proxy_header(req):
             if rp_header_username:
                 user = _fetch_user_by_name(rp_header_username)
                 if user:
-                    [limiter.limiter.storage.clear(k.key) for k in limiter.current_limits]
+                    [
+                        limiter.limiter.storage.clear(k.key)
+                        for k in limiter.current_limits
+                    ]
                     login_user(user)
                     return user
     return None
-

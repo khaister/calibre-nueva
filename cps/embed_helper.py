@@ -34,17 +34,30 @@ def do_calibre_export(book_id, book_format):
         temp_file_name = str(uuid4())
         my_env = os.environ.copy()
         if config.config_calibre_split:
-            my_env['CALIBRE_OVERRIDE_DATABASE_PATH'] = os.path.join(config.config_calibre_dir, "metadata.db")
+            my_env["CALIBRE_OVERRIDE_DATABASE_PATH"] = os.path.join(
+                config.config_calibre_dir, "metadata.db"
+            )
             library_path = config.config_calibre_split_dir
         else:
             library_path = config.config_calibre_dir
-        opf_command = [calibredb_binarypath, 'export', '--dont-write-opf', '--with-library', library_path,
-                       '--to-dir', tmp_dir, '--formats', book_format, "--template", "{}".format(temp_file_name),
-                       str(book_id)]
+        opf_command = [
+            calibredb_binarypath,
+            "export",
+            "--dont-write-opf",
+            "--with-library",
+            library_path,
+            "--to-dir",
+            tmp_dir,
+            "--formats",
+            book_format,
+            "--template",
+            "{}".format(temp_file_name),
+            str(book_id),
+        ]
         p = process_open(opf_command, quotes, my_env)
         _, err = p.communicate()
         if err:
-            log.error('Metadata embedder encountered an error: %s', err)
+            log.error("Metadata embedder encountered an error: %s", err)
         return tmp_dir, temp_file_name
     except OSError as ex:
         # ToDo real error handling
@@ -58,6 +71,9 @@ def get_calibre_binarypath(binary):
         try:
             return os.path.join(binariesdir, SUPPORTED_CALIBRE_BINARIES[binary])
         except KeyError as ex:
-            log.error("Binary not supported by Calibre-Web: %s", SUPPORTED_CALIBRE_BINARIES[binary])
+            log.error(
+                "Binary not supported by Calibre-Web: %s",
+                SUPPORTED_CALIBRE_BINARIES[binary],
+            )
             pass
     return ""

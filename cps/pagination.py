@@ -61,14 +61,17 @@ class Pagination(object):
     # left_edge: first left_edges count of all pages are shown as number                                    -> 1,2 shown
     # left_current: left_current count below current page are shown as number, means if current page 5      -> 3,4 shown
     # left_current: right_current count above current page are shown as number, means if current page 5     -> 6,7 shown
-    def iter_pages(self, left_edge=2, left_current=2,
-                   right_current=4, right_edge=2):
+    def iter_pages(self, left_edge=2, left_current=2, right_current=4, right_edge=2):
         last = 0
         left_current = self.page - left_current - 1
         right_current = self.page + right_current + 1
         right_edge = self.pages - right_edge
         for num in range(1, (self.pages + 1)):
-            if num <= left_edge or (left_current < num < right_current) or num > right_edge:
+            if (
+                num <= left_edge
+                or (left_current < num < right_current)
+                or num > right_edge
+            ):
                 if last + 1 != num:
                     yield None
                 yield num
